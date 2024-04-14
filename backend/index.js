@@ -1,7 +1,14 @@
 const express = require("express");
+const cors = require('cors')
 
-const {connectDB, User} = require('./db.js');
+app.use(cors());
+app.use(express.json());
 
-connectDB();
-User();
+const mainRouter = require("./routes/index.js")
+
+const app = express();
+
+app.use("/api/v1", mainRouter);
+
+app.listen(3000);
 
