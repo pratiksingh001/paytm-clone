@@ -17,27 +17,32 @@ const signinSchema = zod.object({
     password: zod.string(),
 })
 
-router.post("/signUp", async (req, res) => {
+router.push("/signUp", async (req, res) => {
     const body = req.body;
-    const {success} = signupSchema.safeParse(req.body);
+    const {success} = signupSchema.safeParse(body);
 
+    // This is to check whether all the inputs are correct
     if(!success){
         return res.json({
-            message: "Email already taken / Incorrect inputs"
+            message: "Email already taken / Incorrect Inputs"
         })
     }
 
-    const user = await User.findOne({
+    // This is to check if the user is a new user or an existing one
+    const user = User.findOne({
         username: body.username
-    }) 
+    })
 
     if(user._id){
         return res.json({
-            message: "Email already taken / Incorrect inputs"
-        })
+            message: "Email already taken / Incorrect Inputs"
+        })  
     }
 
+    // After checking that inputs are correct and the user is a new user, then we will create/add that in our db
     const dbUser = await User.create(body);
+
+    // This is the method to create the jwtToken
     const token = jwt.sign({
         userId: dbUser._id
     }, JWT_SECRET)
@@ -48,34 +53,37 @@ router.post("/signUp", async (req, res) => {
     })
 })
 
-router.post("signIn", async (res, res) => {
+router.post("/signIn", async (req, res) => {
     const body = req.body;
-    const {success} = signinSchema.safeParse(req.body);
+
+    const {success} = signinSchema.safeParse(body);
 
     if(!success){
         return res.json({
-            message: "Incorrect Inputs"
+            message: "Invalid Inputs"
         })
     }
 
-    const user = await User.findOne({
+    const dbUser = await User.findOne({
         username: body.username
-    }) 
-    
-    if (user) {
+    });
+
+    if(dbUser){
         const token = jwt.sign({
-            userId: user._id
-        }, JWT_SECRET);
-  
-        res.json({
+            userId : dbUser._id
+        }, JWT_SECRET)
+
+        res.status(200).json({
+            message: "User Signed in successfully",
             token: token
         })
         return;
     }
 
     res.status(411).json({
-        message: "Error while logging in"
+        message: "Something went wrong while login"
     })
+
 })
 
 module.exports = router
