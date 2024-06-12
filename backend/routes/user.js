@@ -4,6 +4,7 @@ const { User } = require("../db");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("../config");
 const router = express.Router();
+const { authMiddleware } = require("../middleware")
 
 const signupSchema = zod.object({
     username: zod.string(),
@@ -17,7 +18,15 @@ const signinSchema = zod.object({
     password: zod.string(),
 })
 
-router.push("/signUp", async (req, res) => {
+const updateUserBody = zod.object({
+	password: zod.string().optional(),
+    firstName: zod.string().optional(),
+    lastName: zod.string().optional(),
+})
+
+
+router.post("/signUp", async (req, res) => {
+    console.log("User Hitted");
     const body = req.body;
     const {success} = signupSchema.safeParse(body);
 
@@ -29,11 +38,15 @@ router.push("/signUp", async (req, res) => {
     }
 
     // This is to check if the user is a new user or an existing one
-    const user = User.findOne({
+    console.log(JSON.stringify(body));
+    const user = await User.findOne({
         username: body.username
-    })
+    });
 
-    if(user._id){
+    console.log(user)
+    // return res.send('hey');
+
+    if(user?._id) {
         return res.json({
             message: "Email already taken / Incorrect Inputs"
         })  
@@ -85,5 +98,26 @@ router.post("/signIn", async (req, res) => {
     })
 
 })
+
+router.put("/", authMiddleware, async (req, res) => {
+    const { success } = updateUserBody.safeParse(req.body)
+    if (!success) {
+        res.status(411).json({
+            message: "Error while updating information"
+        })
+    }
+
+    await User.updateOne(req.body, {
+        id: req.userId
+    })
+
+    res.json({
+        message: "Updated successfully"
+    })
+})
+
+// router.get('/getAllUsers', authMiddleware , (req, res) => {
+    
+// })
 
 module.exports = router
