@@ -48,7 +48,7 @@ router.post("/signUp", async (req, res) => {
 
     if(user?._id) {
         return res.json({
-            message: "Email already taken / Incorrect Inputs"
+            message: "User already present / Incorrect Inputs"
         })  
     }
 
@@ -99,7 +99,7 @@ router.post("/signIn", async (req, res) => {
 
 })
 
-router.put("/", authMiddleware, async (req, res) => {
+router.put("/:userId", async (req, res) => {
     const { success } = updateUserBody.safeParse(req.body)
     if (!success) {
         res.status(411).json({
@@ -107,17 +107,31 @@ router.put("/", authMiddleware, async (req, res) => {
         })
     }
 
-    await User.updateOne(req.body, {
-        id: req.userId
-    })
+    await User.updateOne(
+      { _id: req.params.userId }, // Assuming _id is the field for user ID
+      req.body
+    );
+    
+    console.log(req.body)
 
     res.json({
-        message: "Updated successfully"
+        message: req.params.userId 
     })
 })
 
-// router.get('/getAllUsers', authMiddleware , (req, res) => {
-    
-// })
+router.get('/getAllUsers', async (req, res) => {
+    try {
+      const allUsers = await User.find({});
+  
+      if (allUsers.length === 0) {
+        return res.json({ message: "No users found" });
+      }
+  
+      res.json({ message: `Found ${allUsers.length} users`, data: allUsers });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
 module.exports = router
