@@ -1,6 +1,6 @@
 const express = require("express");
 const zod = require("zod");
-const { User } = require("../db");
+const { User, Account } = require("../db");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("../config");
 const router = express.Router();
@@ -54,6 +54,11 @@ router.post("/signUp", async (req, res) => {
 
     // After checking that inputs are correct and the user is a new user, then we will create/add that in our db
     const dbUser = await User.create(body);
+
+    await Account.create({
+        userId: dbUser._id,
+        balance: 1 + Math.random() * 10000
+    })
 
     // This is the method to create the jwtToken
     const token = jwt.sign({
